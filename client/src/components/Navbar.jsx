@@ -1,13 +1,29 @@
 import React, { useState, useEffect } from 'react'
+import axiosInstance from "../api/axiosInstance";
 
 function Navbar({ showFilters, setShowFilters }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
 
   useEffect(() => {
-    // Replace with real login check logic
-    const user = localStorage.getItem("user");
-    setIsLoggedIn(!!user);
+    const fetchUser = async () => {
+      try {
+        const res = await axiosInstance.get("/user/check", {
+          withCredentials: true
+        });
+        if (res.data.success) {
+          setUser(res.data.user);
+
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.log("User not logged in");
+        setUser(null);
+      }
+    };
+
+    fetchUser();
   }, []);
 
   return (
@@ -41,10 +57,10 @@ function Navbar({ showFilters, setShowFilters }) {
     <ul className="flex items-center space-x-4 font-medium text-gray-900 dark:text-white ml-4">
       <li><a href="/" className="hover:text-blue-600">Home</a></li>
 
-      {isLoggedIn && (
+      {user && (
         <>
           <li><a href="/sell" className="hover:text-blue-600">Sell</a></li>
-          <li><a href="/requests" className="hover:text-blue-600 relative">Requests<span className="absolute -top-2 -right-3 text-xs font-bold bg-red-500 text-white rounded-full px-1">12</span></a></li>
+          <li><a href="/requests" className="hover:text-white-600 relative">Requests<span className="absolute -top-2 -right-3 text-xs font-bold bg-red-500 text-white rounded-full px-1">12</span></a></li>
           <li><a href="/cart" className="hover:text-blue-600">Cart</a></li>
         </>
       )}
@@ -52,20 +68,31 @@ function Navbar({ showFilters, setShowFilters }) {
 
     {/* Profile/Login */}
     <div>
-      {isLoggedIn ? (
-        <div className="relative">
-          <button
+      {user ? (
+         <div className="relative">
+          <img
             onClick={() => setShowDrawer(!showDrawer)}
-            className="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
-          >
-            <img className="w-8 h-8 rounded-full" src="./src/assets/profile1.jpeg" alt="user" />
-          </button>
+            className="rounded-full object-cover border cursor-pointer"
+            src={user?.profilePic || "/src/assets/profile1.jpeg"}
+            alt="user"
+            style={{ width: 60, height: 60 }}
+          />
           {showDrawer && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-2 z-50">
-              <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
-              <a href="/change-password" className="block px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">Change Password</a>
+            <div className="absolute right-0 mt-2 w-50 bg-white dark:bg-gray-800 rounded-md shadow-lg py-2 z-50">
+
+              <p className='block px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'>Hello, {user.fullName}</p>
+              <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">Profile settings</a>
               <div className="border-t border-gray-200 dark:border-gray-600 my-2"></div>
-              <a href="/logout" className="block px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">Logout</a>
+              <button
+                onClick={async () => {
+                  await axiosInstance.post("/user/logout", {}, { withCredentials: true });
+                  setUser(null);
+                  window.location.href = "/login";
+                }}
+                className="block w-full text-left px-1 py-1 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Logout
+              </button>
             </div>
           )}
         </div>

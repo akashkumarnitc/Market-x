@@ -1,14 +1,34 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import dummyProducts from '../data/dummyProducts';
+import axios from 'axios';
 import Layout from '../components/Layout';
-
+import Loading from '../components/Loading';
+import axiosInstance from '../api/axiosInstance';
 function ProductDetails() {
   const { id } = useParams();
-  const product = dummyProducts.find(p => p._id === id);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!product) {
-    return <Layout><p className="text-red-600">Product not found</p></Layout>;
+  useEffect(() => {
+    axiosInstance.get(`/product/${id}`)
+      .then(response => {
+        setProduct(response.data.product);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setError("Product not found");
+        setLoading(false);
+      });
+  }, [id]);
+
+  if (loading) {
+    return <Layout><Loading /></Layout>;
+  }
+
+  if (error) {
+    return <Layout><p className="text-red-600">{error}</p></Layout>;
   }
 
   return (
@@ -31,6 +51,11 @@ function ProductDetails() {
           {product.category}
         </div>
       </div>
+     <div className="inline-block bg-yellow-100 text-orange-800 px-3 py-1 my-2 rounded text-sm font-medium border border-orange-400">
+          <p className="text-xl  text-blue-600 mt-2">Seller contact</p>
+          <p className="text-blue-600 mt-2">email:{product.seller.email}</p>
+          <p className="text-blue-600 mt-2">{product.seller.fullName}</p>
+        </div>
       <div className="mt-6">
         <button className="btn btn-primary">Make Request</button>
       </div>

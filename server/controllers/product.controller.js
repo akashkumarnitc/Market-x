@@ -18,7 +18,7 @@ export const createProduct = async (req, res) => {
         .json({ message: "All fields are required", success: false });
     }
 
-    // habdle the image file
+    // handle the image file
     let cloudResponse = "";
     if (file) {
       const fileUri = getDataUri(file);

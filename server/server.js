@@ -18,13 +18,14 @@ const app = express();
 // middlewares
 app.use(express.json()); // parse json body
 app.use(express.urlencoded({ extended: true })); // parse url-encoded data
-app.use(cookieParser());
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
     credentials: true, // allow cookies
   })
 );
+app.use(cookieParser());
 
 // connect DB
 connectDB();

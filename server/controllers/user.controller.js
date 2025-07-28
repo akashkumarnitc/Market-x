@@ -10,42 +10,53 @@ import cloudinary from "../config/cloudinary.js";
 export const register = async (req, res) => {
   const { fullName, email, phoneNumber, password } = req.body;
   const file = req.file;
+
   try {
-    // validate data
+    // console.log("➡️ REGISTER CONTROLLER STARTED");
+    // console.log("➡️ req.body:", req.body);
+    // console.log("➡️ req.file:", req.file);
+
     if (!fullName || !email || !phoneNumber || !password) {
-      return res
-        .status(400)
-        .json({ message: "All fields are required.", success: false });
+      return res.status(400).json({ message: "All fields are required.", success: false });
     }
 
-    // check if user is already existing
-    const user = await User.findOne({ email });
-    if (user) {
-      return res
-        .status(400)
-        .json({ message: "User already exists", success: false });
+    // Optional: Pre-check for email
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ message: "Email is already registered.", success: false });
     }
 
-    let cloudResponse = "";
+    // Optional: Pre-check for phone number
+    const existingPhone = await User.findOne({ phoneNumber });
+    if (existingPhone) {
+      return res.status(400).json({ message: "Phone number is already registered.", success: false });
+    }
+
+    let profilePicUrl = "";
     if (file) {
+      // console.log("uploading to cloud...");
       const fileUri = getDataUri(file);
-      cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+      // console.log("file uri:", fileUri);
+      const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+      // console.log("➡️ Cloudinary response:", cloudResponse);
+      profilePicUrl = cloudResponse.secure_url;
     }
 
-    // hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // create user
     const newUser = await User.create({
       fullName,
       email,
       phoneNumber,
       password: hashedPassword,
-      profilePic: cloudResponse.secure_url,
+      profilePic: profilePicUrl,
     });
 
-    // generate jwt token
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is missing");
+    }
+
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
@@ -54,12 +65,12 @@ export const register = async (req, res) => {
       .status(201)
       .cookie("token", token, {
         httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000,
         sameSite: "strict",
-        secure: process.env.NODE_ENV === "production", // only send over https in prod
+        secure: process.env.NODE_ENV === "production",
       })
       .json({
-        message: "User registered successfuly.",
+        message: "User registered successfully.",
         success: true,
         token,
         user: {
@@ -71,11 +82,28 @@ export const register = async (req, res) => {
         },
       });
   } catch (error) {
-    console.log("Error in register controller ", error);
-    res.status(500).json({ message: "Internal server error", success: false });
+    console.error("Error in register controller:", error.message);
+
+    // Catch MongoDB duplicate key error
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyValue)[0];
+      const duplicateValue = error.keyValue[duplicateField];
+
+      let message = "";
+      if (duplicateField === "email") {
+        message = `Email "${duplicateValue}" is already registered.`;
+      } else if (duplicateField === "phoneNumber") {
+        message = `Phone number "${duplicateValue}" is already registered.`;
+      } else {
+        message = `${duplicateField} already exists.`;
+      }
+
+      return res.status(400).json({ message, success: false });
+    }
+
+    return res.status(500).json({ message: "Internal server error", success: false });
   }
 };
-
 // @desc     Login user
 // @route    POST /api/user/login
 // @access   Public
@@ -114,7 +142,7 @@ export const login = async (req, res) => {
       .cookie("token", token, {
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        sameSite: "strict",
+        sameSite: "lax",
         secure: process.env.NODE_ENV === "production", // only send over https in prod
       })
       .json({

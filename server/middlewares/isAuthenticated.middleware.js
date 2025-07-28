@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 
 export const isAuthenticated = (req, res, next) => {
   try {
-    // get token from cookie
     const token = req.cookies.token;
 
     if (!token) {
@@ -11,14 +10,14 @@ export const isAuthenticated = (req, res, next) => {
         .json({ message: "Not authorized - Token missing", success: false });
     }
 
-    // verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // attach the userId to request
     req.id = decoded.userId;
 
     next();
   } catch (error) {
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({ message: "Invalid token", success: false });
+    }
     console.log("Error in isAuthenticated middleware", error);
     res.status(500).json({ message: "Internal server error", success: false });
   }

@@ -14,6 +14,16 @@ const purchaseRequestSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    reqMessage: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    offerPrice: {
+      type: Number,
+      required: false,
+      min: 0,
+    },
     status: {
       type: String,
       enum: ["Pending", "Accepted", "Rejected", "Cancelled"],

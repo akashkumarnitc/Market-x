@@ -1,23 +1,26 @@
 import React, { useState } from 'react'
 import axiosInstance from '../api/axiosInstance';
-
 import Layout from './Layout'
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const navigate = useNavigate();
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await axiosInstance.post('/user/login', { email, password });
-      setMessage(res.data.message);
-      navigate("/");
-    } catch (err) {
-      setMessage(err.response?.data?.message || 'Login failed');
-    }
-  };
+      const dispatch = useDispatch();
+       const [email, setEmail] = useState('');
+       const [password, setPassword] = useState('');
+       const [message, setMessage] = useState('');
+       const navigate = useNavigate();
+       const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const res = await axiosInstance.post('/user/login', { email, password });
+          setMessage(res.data.message);
+          navigate("/");
+        } catch (err) {
+          setMessage(err.response?.data?.message || 'Login failed');
+        }
+      };
+      
+
 
   return (
     <>

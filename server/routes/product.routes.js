@@ -14,11 +14,11 @@ const router = express.Router();
 
 // public routes
 router.get("/all", getAllProducts);
-router.get("/:id", getProductById);
 
 // private routes (authentication required)
 router.post("/create", isAuthenticated, singleUpload, createProduct);
 router.get("/my", isAuthenticated, getUserProducts);
+router.get("/:id", getProductById);
 router.put("/:id", isAuthenticated, updateProduct);
 router.patch("/:id/status", isAuthenticated, updateProductStatus);
 

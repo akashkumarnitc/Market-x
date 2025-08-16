@@ -5,12 +5,14 @@ import Signin from '../components/Signin';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import axiosInstance from '../api/axiosInstance';
-
+import { fetchSellerRequests, acceptRequest } from "../features/requests/requestsSlice"
+import { useSelector } from 'react-redux';
 const Home = ()=> {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const unseenCount = useSelector((state)=>state.requests.unseenCount);
 
   useEffect(() => {
     // Fetch products

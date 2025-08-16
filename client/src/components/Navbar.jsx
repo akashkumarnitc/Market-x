@@ -1,30 +1,38 @@
 import React, { useState, useEffect } from 'react'
-import axiosInstance from "../api/axiosInstance";
-
+import { useSelector ,useDispatch} from 'react-redux';
+import { checkUser,logoutUser } from '../features/user/userSlice';
 function Navbar({ showFilters, setShowFilters }) {
-  const [user, setUser] = useState(null);
+  // const user = useSelector((state)=>state.user.user)
+  // const [showDrawer, setShowDrawer] = useState(false);
+
+  // useEffect(() => {
+  //   const fetchUser = async () => {
+  //     try {
+  //       const res = await axiosInstance.get("/user/check", {
+  //         withCredentials: true
+  //       });
+  //       if (res.data.success) {
+  //         setUser(res.data.user);
+
+  //       } else {
+  //         setUser(null);
+  //       }
+  //     } catch (error) {
+  //       console.log("User not logged in");
+  //       setUser(null);
+  //     }
+  //   };
+
+  //   fetchUser();
+  // }, []);
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.user);
   const [showDrawer, setShowDrawer] = useState(false);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axiosInstance.get("/user/check", {
-          withCredentials: true
-        });
-        if (res.data.success) {
-          setUser(res.data.user);
-
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.log("User not logged in");
-        setUser(null);
-      }
-    };
-
-    fetchUser();
-  }, []);
+  const unseenCount = useSelector((state)=>state.requests.unseenCount);
+// fetch logged inuser on mount
+  useEffect(()=>{
+    dispatch(checkUser());
+  },[dispatch]);
 
   return (
     <>
@@ -60,7 +68,7 @@ function Navbar({ showFilters, setShowFilters }) {
       {user && (
         <>
           <li><a href="/sell" className="hover:text-blue-600">Sell</a></li>
-          <li><a href="/requests" className="hover:text-white-600 relative">Requests<span className="absolute -top-2 -right-3 text-xs font-bold bg-red-500 text-white rounded-full px-1">12</span></a></li>
+          <li><a href="/requests" className="hover:text-white-600 relative">Requests<span className="absolute -top-2 -right-3 text-xs font-bold bg-red-500 text-white rounded-full px-1">{unseenCount}</span></a></li>
           <li><a href="/cart" className="hover:text-blue-600">Cart</a></li>
         </>
       )}
@@ -85,9 +93,11 @@ function Navbar({ showFilters, setShowFilters }) {
               <div className="border-t border-gray-200 dark:border-gray-600 my-2"></div>
               <button
                 onClick={async () => {
-                  await axiosInstance.post("/user/logout", {}, { withCredentials: true });
-                  setUser(null);
-                  window.location.href = "/login";
+                  dispatch(logoutUser()).then(()=>{
+                    window.location.href = "/login";
+                  })
+
+
                 }}
                 className="block w-full text-left px-1 py-1 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
               >

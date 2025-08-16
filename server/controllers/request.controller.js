@@ -7,6 +7,7 @@ import Product from "../models/product.model.js";
 export const createPurchaseRequest = async (req, res) => {
   const productId = req.params.productId;
   const buyerId = req.id;
+  const { reqMessage, offerPrice } = req.body;
 
   try {
     // 1. find product
@@ -41,6 +42,8 @@ export const createPurchaseRequest = async (req, res) => {
       productId,
       buyerId,
       sellerId: product.seller,
+      reqMessage,
+      offerPrice,
     });
 
     return res.status(200).json({
